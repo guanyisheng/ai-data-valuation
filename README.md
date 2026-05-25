@@ -8,6 +8,22 @@
 
 ---
 
+## 界面预览
+
+### 页面
+
+<img width="100%" alt="估值参数与报告主界面" src="https://github.com/user-attachments/assets/a71d1316-d7cc-4142-b1cf-a252265912b0" />
+
+<img width="100%" alt="估值方法切换与表单" src="https://github.com/user-attachments/assets/e99475b9-e56a-40f5-a74f-44f4918529fb" />
+
+<img width="100%" alt="历史记录与本地缓存说明" src="https://github.com/user-attachments/assets/5c23d3fd-42e0-4077-9ded-8955c7a84b81" />
+
+### 运行结果展示
+
+<img width="480" alt="AI 估值报告生成结果" src="https://github.com/user-attachments/assets/456b2a51-e2e6-4a4a-8796-84b65b391580" />
+
+---
+
 ## 功能特性
 
 - **双估值方法**：成本法、收益法（DCF 折现）

@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 数据资产估值系统</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9672;</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">&#9672;</span>
+        <h1>AI 数据资产估值系统</h1>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn-history" id="historyBtn" aria-label="历史记录">
+          历史记录
+        </button>
+        <div class="header-badge">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">AI 待连接</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="history-overlay hidden" id="historyOverlay" aria-hidden="true">
+    <div class="history-modal glass" role="dialog" aria-labelledby="historyTitle">
+      <div class="history-modal-header">
+        <div>
+          <h2 id="historyTitle">历史记录</h2>
+          <p class="history-subtitle">本地缓存模式</p>
+        </div>
+        <button type="button" class="history-close" id="historyClose" aria-label="关闭">&times;</button>
+      </div>
+      <div class="history-notice">
+        估值记录保存在浏览器 <strong>localStorage</strong> 本地缓存中，不会上传到任何服务器。
+        清除浏览器数据、换设备或使用无痕模式后，记录将不可恢复。
+      </div>
+      <div class="history-toolbar">
+        <span class="history-count" id="historyCount">共 0 条</span>
+        <button type="button" class="btn-history-clear" id="historyClearBtn">清空全部</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+      <div class="history-empty hidden" id="historyEmpty">
+        <p>暂无历史记录</p>
+        <span>完成一次估值后会自动保存到这里</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="main">
+    <section class="panel panel-input glass">
+      <div class="panel-header">
+        <h2>估值参数</h2>
+      </div>
+
+      <form id="valuationForm" novalidate>
+        <div class="form-group">
+          <label for="assetName">数据资产名称</label>
+          <input type="text" id="assetName" name="asset_name" placeholder="例如：客户行为分析数据集" required maxlength="200" />
+        </div>
+
+        <div class="form-group">
+          <label for="industryType">行业类型</label>
+          <select id="industryType" name="industry_type" required>
+            <option value="">请选择行业</option>
+            <option value="finance">金融</option>
+            <option value="healthcare">医疗健康</option>
+            <option value="retail">零售电商</option>
+            <option value="manufacturing">智能制造</option>
+            <option value="internet">互联网科技</option>
+            <option value="energy">能源电力</option>
+            <option value="government">政务公共</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>估值方法</label>
+          <div class="method-tabs">
+            <button type="button" class="method-tab active" data-method="cost">成本法</button>
+            <button type="button" class="method-tab" data-method="income">收益法</button>
+          </div>
+          <input type="hidden" id="valuationMethod" name="valuation_method" value="cost" />
+        </div>
+
+        <div id="costFields" class="method-fields">
+          <div class="form-group">
+            <label for="acquisitionCost">获取成本（元）</label>
+            <input type="number" id="acquisitionCost" name="acquisition_cost" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label for="storageCost">存储成本（元）</label>
+            <input type="number" id="storageCost" name="storage_cost" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label for="governanceCost">治理成本（元）</label>
+            <input type="number" id="governanceCost" name="governance_cost" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <p class="field-hint">估值 = 获取成本 + 存储成本 + 治理成本</p>
+        </div>
+
+        <div id="incomeFields" class="method-fields hidden">
+          <div class="form-group">
+            <label for="discountRate">折现率</label>
+            <input type="number" id="discountRate" name="discount_rate" min="0.01" max="99" step="0.01" placeholder="例如：10 表示 10%" />
+          </div>
+          <div class="form-group">
+            <label for="revenueForecast">收益预测（元/年）</label>
+            <textarea id="revenueForecast" name="revenue_forecast" rows="4" placeholder="每年收益用逗号分隔"></textarea>
+          </div>
+          <p class="field-hint">估值 = &Sigma; [未来收益 / (1 + 折现率)^年数]</p>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <span class="btn-text">开始估值</span>
+          <span class="btn-loader hidden" id="btnLoader">
+            <span class="spinner"></span>
+            处理中&hellip;
+          </span>
+        </button>
+      </form>
+    </section>
+
+    <section class="panel panel-report glass">
+      <div class="panel-header">
+        <h2>AI 估值报告</h2>
+      </div>
+
+      <div id="resultCard" class="result-card hidden">
+        <div class="result-label">估值结果</div>
+        <div class="result-value" id="resultValue">&mdash;</div>
+        <div class="result-meta">
+          <span id="resultMethod">&mdash;</span>
+          <span class="meta-sep">&middot;</span>
+          <span id="resultIndustry">&mdash;</span>
+        </div>
+      </div>
+
+      <div id="reportContainer" class="report-container">
+        <div class="report-placeholder" id="reportPlaceholder">
+          <div class="placeholder-icon">&#10022;</div>
+          <p>填写参数后点击「开始估值」</p>
+        </div>
+
+        <div id="reportLoading" class="ai-progress-panel hidden">
+          <div class="progress-top">
+            <div class="progress-info">
+              <span class="progress-label" id="progressLabel">处理中</span>
+              <span class="progress-percent" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+          <div class="ai-log-panel">
+            <div class="ai-log-list" id="aiLogList"></div>
+          </div>
+          <article id="reportStreamPreview" class="report-content markdown-body report-stream-preview hidden"></article>
+        </div>
+
+        <article id="reportContent" class="report-content markdown-body hidden"></article>
+      </div>
+
+      <div id="errorBanner" class="error-banner hidden"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/calculate.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
